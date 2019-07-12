@@ -279,7 +279,24 @@ for _, strategy in helpers.each_strategy() do
           -- lua-multipart doesn't currently handle duplicates in the same method
           -- that json/form-urlencoded handlers do
           local test = type == "multipart/form-data" and pending or it
-          test("handles duplicated key", function()
+          test("handles duplicated key (array indexes)", function()
+            local res = assert(proxy_client:send {
+              method  = "POST",
+              path    = "/status/200",
+              headers = {
+                ["Host"]         = "key-auth5.com",
+                ["Content-Type"] = type,
+              },
+              body = {
+                apikey = { "kong", "kong" },
+              },
+            })
+            local body = assert.res_status(401, res)
+            local json = cjson.decode(body)
+            assert.same({ message = "Duplicate API key found" }, json)
+          end)
+
+          test("handles duplicated key (no array indexes)", function()
             local res = assert(proxy_client:send {
               method  = "POST",
               path    = "/status/200",

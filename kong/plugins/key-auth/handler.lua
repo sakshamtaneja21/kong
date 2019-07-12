@@ -112,6 +112,10 @@ local function do_authentication(conf)
     -- search the body, if we asked to
     if not v and conf.key_in_body then
       v = body[name]
+      -- duplicated keys in form-urlencoded requests
+      if not v and (body[name .. "[]"] or body[name .. "[1]"]) then
+        return nil, { status = 401, message = "Duplicate API key found" }
+      end
     end
 
     if type(v) == "string" then
@@ -130,7 +134,7 @@ local function do_authentication(conf)
 
       break
 
-    elseif type(v) == "table" then
+    elseif type(v) == "table" then -- duplicated key in a json request
       -- duplicate API key
       return nil, { status = 401, message = "Duplicate API key found" }
     end
